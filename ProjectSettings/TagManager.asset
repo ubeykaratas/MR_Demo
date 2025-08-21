@@ -6,6 +6,16 @@ TagManager:
   tags:
   - QDSUIBackplateGradient
   - QDSUIToggleBorderlessButton
+  - QDSUIPrimaryButton
+  - QDSUIAccentColor
+  - QDSUITextInvertedColor
+  - QDSUITextSecondaryInvertedColor
+  - QDSUISecondaryButton
+  - QDSUIIcon
+  - QDSUIToggleButton
+  - QDSUITextSecondaryColor
+  - QDSUIDestructiveButton
+  - QDSUISharedThemeColor
   layers:
   - Default
   - TransparentFX
@@ -13,7 +23,7 @@ TagManager:
   - Overlay UI
   - Water
   - UI
-  - 
+  - Uninteractable UI
   - 
   - 
   - 
