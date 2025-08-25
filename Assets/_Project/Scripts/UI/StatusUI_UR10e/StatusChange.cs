@@ -10,10 +10,11 @@ public class StatusChange : MonoBehaviour
         Idle,
         Working,
         Paused,
+        Returning,
         Error,
     }
 
-    private enum RobotTasks
+    public enum RobotTasks
     {
         None,
         SurfaceScan,
@@ -21,14 +22,23 @@ public class StatusChange : MonoBehaviour
         Logging,
     }
     
+    public delegate void StatusChangedEvent(RobotStatus status);
+    public static event StatusChangedEvent OnStatusChanged;
+    
+    public delegate void TaskChangedEvent(RobotTasks task);
+    public static event TaskChangedEvent OnTaskChanged;
+    
+    public delegate void TotalDurationEvent(int totalDuration);
+    public static event TotalDurationEvent OnTotalDurationCalculated;
+    
     private RobotStatus _currentStatus = RobotStatus.Idle;
     private RobotTasks _currentTask = RobotTasks.None;
     
     [Header("Duration")]
     [Tooltip("Sets the minimum robot scan time in seconds")]
-    [SerializeField] private float _minScanTime = 15f;
+    [SerializeField] private int _minScanTime = 15;
     [Tooltip("Sets the maximum robot scan time in seconds")]
-    [SerializeField] private float _maxScanTime = 20f;
+    [SerializeField] private int _maxScanTime = 20;
     
     [Header("Defect Settings")]
     [Tooltip("Sets the minimum number of defect that can be encountered")]
@@ -60,8 +70,10 @@ public class StatusChange : MonoBehaviour
     private void OnStartClicked()
     {
         if (_currentStatus != RobotStatus.Idle) return;
-        float duration = Random.Range(_minScanTime, _maxScanTime + .01f);
-        _workingCoroutine = StartCoroutine(DoWork(duration));
+        int duration = Random.Range(_minScanTime, _maxScanTime + 1);
+        int defectCount = Random.Range(_minDefectCount, _maxDefectCount + 1);
+        _workingCoroutine = StartCoroutine(DoWork(duration,defectCount));
+        OnTotalDurationCalculated?.Invoke(duration);
     }
     
     private void OnStopClicked()
@@ -69,6 +81,8 @@ public class StatusChange : MonoBehaviour
         if(_currentStatus == RobotStatus.Idle) return;
         StopCoroutine(_workingCoroutine);
         ResetProgress();
+        SetTask(RobotTasks.None);
+        OnTotalDurationCalculated?.Invoke(-1);
     }
     #endregion
 
@@ -76,32 +90,30 @@ public class StatusChange : MonoBehaviour
     private void ResetProgress()
     {
         _slider.value = 0f;
-        SetStatus(RobotStatus.Idle);
-        SetTask(RobotTasks.None);
     }
 
-    private void SetStatus(RobotStatus status)
+    public void SetStatus(RobotStatus status)
     {
         _currentStatus = status;
         _statusText.text = $"<b>Status: <smallcaps>{_currentStatus.ToString()}</smallcaps></b>";
+        OnStatusChanged?.Invoke(status);
     }
     
-    private void SetTask(RobotTasks task)
+    public void SetTask(RobotTasks task)
     {
         _currentTask = task;
         _taskText.text = $"<b>Task: <smallcaps>{_currentTask.ToString()}</smallcaps></b>";
+        OnTaskChanged?.Invoke(task);
     }
     #endregion
     
-    private System.Collections.IEnumerator DoWork(float duration)
+    private System.Collections.IEnumerator DoWork(float duration, float defectCount)
     {
-        SetStatus(RobotStatus.Working);
         SetTask(RobotTasks.SurfaceScan);
         
         float elapsed = 0f;
         _slider.value = 0f;
-
-        int defectCount = Random.Range(_minDefectCount, _maxDefectCount + 1);
+        
         System.Collections.Generic.List<float> defectTimes = new System.Collections.Generic.List<float>();
         for (int i = 0; i < defectCount; i++)
         {
@@ -117,8 +129,10 @@ public class StatusChange : MonoBehaviour
         {
             if (nextDefectIndex < defectTimes.Count && elapsed >= defectTimes[nextDefectIndex])
             {
+                RobotStatus originalStatus = _currentStatus;
                 float pausedTime = 0f;
                 SetTask(RobotTasks.DefectAnalysis);
+                SetStatus(RobotStatus.Paused);
                 while (pausedTime < _defectPauseTime)
                 {
                     pausedTime += Time.deltaTime;
@@ -132,7 +146,7 @@ public class StatusChange : MonoBehaviour
                     pausedTime += Time.deltaTime;
                     yield return null;
                 }
-                
+                SetStatus(originalStatus);
                 SetTask(RobotTasks.SurfaceScan);
                 nextDefectIndex++;
             }
@@ -143,4 +157,18 @@ public class StatusChange : MonoBehaviour
 
         ResetProgress();
     }
+
+    #region Getter-Setter
+    //private RobotStatus _currentStatus = RobotStatus.Idle;
+    //private RobotTasks _currentTask = RobotTasks.None;
+
+    public RobotStatus CurrentStatus => _currentStatus;
+    public RobotTasks CurrentTask => _currentTask;
+
+    public int GetDefectPauseTime()
+    {
+        return _defectPauseTime;
+    }
+
+    #endregion
 }
