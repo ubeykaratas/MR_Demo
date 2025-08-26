@@ -63,6 +63,7 @@ public class StatusChange : MonoBehaviour
         _startButton.onClick.AddListener(OnStartClicked);
         _stopButton.onClick.AddListener(OnStopClicked);
         ResetProgress();
+        _slider.value = 0f;
     }
     #endregion
     
@@ -81,7 +82,6 @@ public class StatusChange : MonoBehaviour
         if(_currentStatus == RobotStatus.Idle) return;
         StopCoroutine(_workingCoroutine);
         ResetProgress();
-        SetTask(RobotTasks.None);
         OnTotalDurationCalculated?.Invoke(-1);
     }
     #endregion
@@ -89,7 +89,10 @@ public class StatusChange : MonoBehaviour
     #region StatusHandlers
     private void ResetProgress()
     {
+        SetTask(RobotTasks.None);
         _slider.value = 0f;
+        if(_currentStatus == RobotStatus.Returning) return;
+        SetStatus(RobotStatus.Idle);
     }
 
     public void SetStatus(RobotStatus status)
@@ -154,14 +157,9 @@ public class StatusChange : MonoBehaviour
             _slider.value = Mathf.Clamp01(elapsed / duration);
             yield return null;
         }
-
-        ResetProgress();
     }
 
     #region Getter-Setter
-    //private RobotStatus _currentStatus = RobotStatus.Idle;
-    //private RobotTasks _currentTask = RobotTasks.None;
-
     public RobotStatus CurrentStatus => _currentStatus;
     public RobotTasks CurrentTask => _currentTask;
 

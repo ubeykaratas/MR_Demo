@@ -8,9 +8,6 @@ public class RobotAnim : MonoBehaviour
     [SerializeField] private float _minZ;
     [SerializeField] private float _maxZ;
     [SerializeField] private float _stepZ;
-
-    [Header("Return Behaviour")]
-    [SerializeField] private float _waitBeforeReturn;
     
     [Header("RobotStatusRef")]
     [SerializeField] private StatusChange _rs;

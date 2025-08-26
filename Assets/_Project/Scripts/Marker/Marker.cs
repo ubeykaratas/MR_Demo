@@ -11,6 +11,9 @@ public class Marker : MonoBehaviour
     [Header("Start Button Reference")]
     [SerializeField] private UnityEngine.UI.Button _startButton;
     
+    [Header("UI References")]
+    [SerializeField] private HandleDefectUI _defectUI;
+    
     private readonly List<GameObject> _markers = new List<GameObject>();
     private StatusChange.RobotStatus _currentStatus;
 
@@ -40,6 +43,7 @@ public class Marker : MonoBehaviour
             Destroy(marker);
         }
         _markers.Clear();
+        _defectUI.RemoveUI();
     }
     
     private void DoMark(StatusChange.RobotTasks task)
@@ -50,6 +54,8 @@ public class Marker : MonoBehaviour
             GameObject temp = Instantiate(_markerPrefab, correctPosition, Quaternion.identity);
             temp.SetActive(true);
             _markers.Add(temp);
+            
+            _defectUI.CreateCoordinate();
         }
     }
 
