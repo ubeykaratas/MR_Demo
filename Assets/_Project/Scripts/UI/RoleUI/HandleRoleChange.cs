@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 
@@ -10,12 +9,10 @@ public class HandleRoleChange:MonoBehaviour
         Administrator,
     }
     
-    [SerializeField] private GameObject _adminSymbol;
-    [SerializeField] private GameObject _operatorSymbol;
     [SerializeField] private TextMeshProUGUI _roleText;
     [SerializeField] private UnityEngine.UI.Button _roleChangeButton;
-    [SerializeField] private GameObject _adminUI;
-    [SerializeField] private GameObject _operatorUI;
+    [SerializeField] private GameObject[] _adminUI;
+    [SerializeField] private GameObject[] _operatorUI;
 
     private Role _currentRole;
 
@@ -23,7 +20,7 @@ public class HandleRoleChange:MonoBehaviour
 
     private void Start()
     {
-        _currentRole = Role.Operator;
+        SetRole(Role.Operator, true);
     }
 
     #endregion
@@ -57,9 +54,15 @@ public class HandleRoleChange:MonoBehaviour
     {
         _currentRole = role;
         _roleText.text = $"    {_currentRole.ToString()} View";
-        _operatorSymbol.SetActive(changeToOperator);
-        _operatorUI.SetActive(changeToOperator);
-        _adminSymbol.SetActive(!changeToOperator);
-        _adminUI.SetActive(!changeToOperator);
+
+        foreach (var ui in _operatorUI)
+        {
+            ui.SetActive(changeToOperator);
+        }
+
+        foreach (var ui in _adminUI)
+        {
+            ui.SetActive(!changeToOperator);
+        }
     }
 }

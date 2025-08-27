@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class RobotAnim : MonoBehaviour
 {
+    private readonly int DURATION_LIMIT_COEFFICIENT = 10;
+    
     [Header("Movement Area")]
     [SerializeField] private float _minX;
     [SerializeField] private float _maxX;
@@ -9,7 +11,7 @@ public class RobotAnim : MonoBehaviour
     [SerializeField] private float _maxZ;
     [SerializeField] private float _stepZ;
     
-    [Header("RobotStatusRef")]
+    [Header("References")]
     [SerializeField] private StatusChange _rs;
     
     private Vector3 _startPos;
@@ -19,8 +21,26 @@ public class RobotAnim : MonoBehaviour
     private float _currentZ;
     private bool _isMovingRight;
     private bool _isMovingZ;
-    private bool _isAnalysing;
     private bool _isPaused;
+    
+    
+    public delegate void TotalTimeChanged();
+    public static event TotalTimeChanged OnTotalTimeChanged;
+    
+    public delegate void TotalDefectChanged();
+    public static event TotalDefectChanged OnTotalDefectChanged;
+    
+    public delegate void CompletedTasksChanged();
+    public static event CompletedTasksChanged OnCompletedTasksChanged;
+
+    private static float _totalTime;
+    private static int _totalDefect;
+    private static int _completedTasks;
+    private Coroutine _pauseCoroutine;
+    private Coroutine _surfaceScanTimeCoroutine;
+
+    private int _counter;
+    
 
     #region monos
 
@@ -29,13 +49,11 @@ public class RobotAnim : MonoBehaviour
         transform.position = new Vector3(_minX, transform.position.y, _minZ);
         _startPos = transform.position;
         _currentZ = _minZ;
-        StatusChange.OnTaskChanged += HandleTaskChange;
         StatusChange.OnTotalDurationCalculated += StartWorking;
     }
 
     private void OnDestroy()
     {
-        StatusChange.OnTaskChanged -= HandleTaskChange;
         StatusChange.OnTotalDurationCalculated -= StartWorking;
     }
 
@@ -52,12 +70,6 @@ public class RobotAnim : MonoBehaviour
     #endregion
 
     #region EventHandler
-
-    private void HandleTaskChange(StatusChange.RobotTasks task)
-    {
-        if (_isAnalysing && task is not (StatusChange.RobotTasks.DefectAnalysis or StatusChange.RobotTasks.Logging)) return;
-        StartCoroutine(PauseMovement(_rs.GetDefectPauseTime()));
-    }
     
     private void StartWorking(int time)
     {
@@ -69,18 +81,38 @@ public class RobotAnim : MonoBehaviour
         }
         _duration = time;
         _rs.SetStatus(StatusChange.RobotStatus.Working);
+        _rs.SetTask(StatusChange.RobotTasks.SurfaceScan);
         ResetProgress();
         CalculateSpeed();
         SetTarget();
+        _surfaceScanTimeCoroutine = StartCoroutine(CountUp());
     }
 
     #endregion
-    
-    private System.Collections.IEnumerator PauseMovement(float time)
+
+    private System.Collections.IEnumerator CountUp()
     {
-        _isAnalysing = true;
-        yield return new WaitForSeconds(time);
-        _isAnalysing = false;
+        while (true)
+        {
+            yield return new WaitForSeconds(1f);
+            IncrementTotalTime(1f);
+            if (++_counter >= _duration * DURATION_LIMIT_COEFFICIENT) yield break;
+        }
+    }
+    private System.Collections.IEnumerator PauseMovement(float defectPauseTime, float logPauseTime)
+    {
+        StatusChange.RobotStatus originalStatus = _rs.CurrentStatus;
+        StatusChange.RobotTasks originalTask = _rs.CurrentTask;
+        _rs.SetStatus(StatusChange.RobotStatus.Paused);
+        _rs.SetTask(StatusChange.RobotTasks.DefectAnalysis);
+        IncrementTotalDefect();
+        yield return new WaitForSeconds(defectPauseTime);
+        IncrementCompletedTasks();
+        _rs.SetTask(StatusChange.RobotTasks.Logging);
+        yield return new WaitForSeconds(logPauseTime);
+        IncrementCompletedTasks();
+        _rs.SetStatus(originalStatus);
+        _rs.SetTask(originalTask);
     }
     
     private void HandleTargetReached()
@@ -91,6 +123,7 @@ public class RobotAnim : MonoBehaviour
             if (nextZ <= _currentZ + 0.01f)
             {
                 _rs.SetStatus(StatusChange.RobotStatus.Returning);
+                IncrementCompletedTasks();
                 SetTarget();
             }
             else
@@ -136,6 +169,8 @@ public class RobotAnim : MonoBehaviour
         {
             case StatusChange.RobotStatus.Returning:
                 _target = _startPos;
+                if (_pauseCoroutine != null) StopCoroutine(_pauseCoroutine);
+                if (_surfaceScanTimeCoroutine != null) StopCoroutine(_surfaceScanTimeCoroutine);
                 return;
             case StatusChange.RobotStatus.Working when !_isMovingZ:
                 float targetX = _isMovingRight ? _maxX : _minX;
@@ -146,12 +181,37 @@ public class RobotAnim : MonoBehaviour
 
     private void ResetProgress()
     {
+        _counter = 0;
         _currentZ = _minZ;
         _isMovingRight = true;
         _isMovingZ = false;
-        _isAnalysing = false;
         transform.position = _startPos;
     }
+
+    #region Private Setters
+
+    private void IncrementTotalTime(float time)
+    {
+        if (time < 0f) return;
+        _totalTime += time;
+        OnTotalTimeChanged?.Invoke();
+    }
+
+    private void IncrementTotalDefect()
+    {
+        ++_totalDefect;
+        OnTotalDefectChanged?.Invoke();
+    }
+
+    private void IncrementCompletedTasks()
+    {
+        ++_completedTasks;
+        OnCompletedTasksChanged?.Invoke();
+    }
+
+    #endregion
+    
+    
     
     #region Gizmos
     
@@ -170,5 +230,17 @@ public class RobotAnim : MonoBehaviour
     }
     
     #endregion
+
+    #region API
+
+    public void DefectDetected()
+    {
+        _pauseCoroutine = StartCoroutine(PauseMovement(_rs.GetDefectPauseTime(), _rs.GetLogPauseTime()));
+    }
     
+    public float TotalTime => _totalTime;
+    public int TotalDefect => _totalDefect;
+    public int CompletedTasks => _completedTasks;
+
+    #endregion
 }

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class RobotIK : MonoBehaviour
 {
-    private const int UR10e_ROBOT_JOINT_COUNT= 6; //ACTUAL JOINT NUMBER
+    private const int UR10e_ROBOT_JOINT_COUNT= 5; //ACTUAL JOINT NUMBER
     
     [Header("Joints")]
     [SerializeField] private Transform[] _joints;
@@ -20,7 +20,7 @@ public class RobotIK : MonoBehaviour
         Vector3.forward, //Joint-3: Z-axis
         Vector3.forward, //Joint-4: Z-axis
         Vector3.up, //Joint-5: Y-axis
-        Vector3.forward, //Joint-6: Z-axis
+        //Vector3.forward, //Joint-6: Z-axis
     };
 
     private void Update()

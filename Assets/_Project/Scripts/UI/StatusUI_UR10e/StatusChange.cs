@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
@@ -40,11 +39,7 @@ public class StatusChange : MonoBehaviour
     [Tooltip("Sets the maximum robot scan time in seconds")]
     [SerializeField] private int _maxScanTime = 20;
     
-    [Header("Defect Settings")]
-    [Tooltip("Sets the minimum number of defect that can be encountered")]
-    [SerializeField] private int _minDefectCount = 1;
-    [Tooltip("Sets the maximum number of defect that can be encountered")]
-    [SerializeField] private int _maxDefectCount = 3;
+    [Header("Defect and Log Settings")]
     [SerializeField] private int _defectPauseTime = 1;
     [SerializeField] private int _logPauseTime = 1;
     
@@ -55,7 +50,7 @@ public class StatusChange : MonoBehaviour
     [SerializeField] private TMPro.TextMeshProUGUI _statusText;
     [SerializeField] private TMPro.TextMeshProUGUI _taskText;
     
-    private Coroutine _workingCoroutine;
+    private Coroutine _sliderCoroutine;
 
     #region monos
     private void Start()
@@ -65,6 +60,9 @@ public class StatusChange : MonoBehaviour
         ResetProgress();
         _slider.value = 0f;
     }
+
+    
+
     #endregion
     
     #region UI Callbacks
@@ -72,17 +70,16 @@ public class StatusChange : MonoBehaviour
     {
         if (_currentStatus != RobotStatus.Idle) return;
         int duration = Random.Range(_minScanTime, _maxScanTime + 1);
-        int defectCount = Random.Range(_minDefectCount, _maxDefectCount + 1);
-        _workingCoroutine = StartCoroutine(DoWork(duration,defectCount));
+        _sliderCoroutine = StartCoroutine(HandleSlider(duration));
         OnTotalDurationCalculated?.Invoke(duration);
     }
     
     private void OnStopClicked()
     {
         if(_currentStatus == RobotStatus.Idle) return;
-        StopCoroutine(_workingCoroutine);
-        ResetProgress();
+        StopCoroutine(_sliderCoroutine);
         OnTotalDurationCalculated?.Invoke(-1);
+        ResetProgress();
     }
     #endregion
 
@@ -90,8 +87,8 @@ public class StatusChange : MonoBehaviour
     private void ResetProgress()
     {
         SetTask(RobotTasks.None);
-        _slider.value = 0f;
         if(_currentStatus == RobotStatus.Returning) return;
+        _slider.value = 0f;
         SetStatus(RobotStatus.Idle);
     }
 
@@ -109,50 +106,19 @@ public class StatusChange : MonoBehaviour
         OnTaskChanged?.Invoke(task);
     }
     #endregion
-    
-    private System.Collections.IEnumerator DoWork(float duration, float defectCount)
+    private System.Collections.IEnumerator HandleSlider(int duration)
     {
-        SetTask(RobotTasks.SurfaceScan);
-        
-        float elapsed = 0f;
+         float elapsed = 0f;
         _slider.value = 0f;
-        
-        System.Collections.Generic.List<float> defectTimes = new System.Collections.Generic.List<float>();
-        for (int i = 0; i < defectCount; i++)
-        {
-            float time = Random.Range(0f, duration);
-            defectTimes.Add(time);
-        }
-        if (defectTimes == null) throw new ArgumentNullException(nameof(defectTimes));
-        defectTimes.Sort();
 
-        int nextDefectIndex = 0;
-        
         while (elapsed < duration)
         {
-            if (nextDefectIndex < defectTimes.Count && elapsed >= defectTimes[nextDefectIndex])
+            if (_currentStatus is not (RobotStatus.Working or RobotStatus.Returning))
             {
-                RobotStatus originalStatus = _currentStatus;
-                float pausedTime = 0f;
-                SetTask(RobotTasks.DefectAnalysis);
-                SetStatus(RobotStatus.Paused);
-                while (pausedTime < _defectPauseTime)
-                {
-                    pausedTime += Time.deltaTime;
-                    yield return null;
-                }
-                
-                SetTask(RobotTasks.Logging);
-                pausedTime = 0f;
-                while (pausedTime < _logPauseTime)
-                {
-                    pausedTime += Time.deltaTime;
-                    yield return null;
-                }
-                SetStatus(originalStatus);
-                SetTask(RobotTasks.SurfaceScan);
-                nextDefectIndex++;
+                yield return null;
+                continue;
             }
+            
             elapsed += Time.deltaTime;
             _slider.value = Mathf.Clamp01(elapsed / duration);
             yield return null;
@@ -166,6 +132,11 @@ public class StatusChange : MonoBehaviour
     public int GetDefectPauseTime()
     {
         return _defectPauseTime;
+    }
+    
+    public int GetLogPauseTime()
+    {
+        return _logPauseTime;
     }
 
     #endregion

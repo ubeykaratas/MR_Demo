@@ -1,66 +1,38 @@
 using UnityEngine;
-using System.Collections.Generic;
 
 public class Marker : MonoBehaviour
 {
-    [Header("Marker Position")]
-    [SerializeField] private GameObject _markerPrefab;
-    [SerializeField] private Transform _markerSpawnPoint;
-    [SerializeField] private float _markerYCorrection;
-    
-    [Header("Start Button Reference")]
-    [SerializeField] private UnityEngine.UI.Button _startButton;
-    
-    [Header("UI References")]
+    [Header("References")]
+    [SerializeField] private RobotAnim _ra;
     [SerializeField] private HandleDefectUI _defectUI;
     
-    private readonly List<GameObject> _markers = new List<GameObject>();
-    private StatusChange.RobotStatus _currentStatus;
+    private bool _isReturning;
 
     #region monos
-    
+
     private void OnEnable()
     {
-        _startButton.onClick.AddListener(RemoveMarks);
-        StatusChange.OnTaskChanged += DoMark;
-        StatusChange.OnStatusChanged += ChangeStatus;
+        StatusChange.OnStatusChanged += StatusHandler;
     }
 
     private void OnDisable()
     {
-        _startButton.onClick.RemoveListener(RemoveMarks);
-        StatusChange.OnTaskChanged -= DoMark;
-        StatusChange.OnStatusChanged -= ChangeStatus;
+        StatusChange.OnStatusChanged -= StatusHandler;
     }
-    
+
     #endregion
+    
 
-    private void RemoveMarks()
+    private void StatusHandler(StatusChange.RobotStatus status)
     {
-        if(_currentStatus != StatusChange.RobotStatus.Idle) return;
-        foreach (GameObject marker in _markers)
-        {
-            Destroy(marker);
-        }
-        _markers.Clear();
-        _defectUI.RemoveUI();
+        _isReturning = status == StatusChange.RobotStatus.Returning;
     }
     
-    private void DoMark(StatusChange.RobotTasks task)
+    private void OnTriggerEnter(Collider other)
     {
-        if (task == StatusChange.RobotTasks.DefectAnalysis)
-        {
-            Vector3 correctPosition = new Vector3(_markerSpawnPoint.position.x, _markerYCorrection, _markerSpawnPoint.position.z);
-            GameObject temp = Instantiate(_markerPrefab, correctPosition, Quaternion.identity);
-            temp.SetActive(true);
-            _markers.Add(temp);
-            
-            _defectUI.CreateCoordinate();
-        }
-    }
-
-    private void ChangeStatus(StatusChange.RobotStatus status)
-    {
-        _currentStatus = status;
+        if (!other.gameObject.CompareTag("Marker") || _isReturning) return;
+        Vector3 markerPos = other.transform.position;
+        _defectUI.CreateCoordinate(markerPos);
+        _ra.DefectDetected();
     }
 }

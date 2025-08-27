@@ -16,6 +16,7 @@ TagManager:
   - QDSUITextSecondaryColor
   - QDSUIDestructiveButton
   - QDSUISharedThemeColor
+  - Marker
   layers:
   - Default
   - TransparentFX
