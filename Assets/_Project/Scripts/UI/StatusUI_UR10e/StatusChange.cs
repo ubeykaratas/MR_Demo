@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
@@ -9,6 +10,7 @@ public class StatusChange : MonoBehaviour
         Idle,
         Working,
         Paused,
+        Analysing,
         Returning,
         Error,
     }
@@ -45,17 +47,21 @@ public class StatusChange : MonoBehaviour
     
     [Header("UI Elements")]
     [SerializeField] private Button _startButton;
+    [SerializeField] private Button _pauseButton;
+    [SerializeField] private TextMeshProUGUI _testText;
     [SerializeField] private Button _stopButton;
     [SerializeField] private Slider _slider;
     [SerializeField] private TMPro.TextMeshProUGUI _statusText;
     [SerializeField] private TMPro.TextMeshProUGUI _taskText;
     
     private Coroutine _sliderCoroutine;
+    private RobotStatus _preStatus = RobotStatus.Idle;
 
     #region monos
     private void Start()
     {
         _startButton.onClick.AddListener(OnStartClicked);
+        _pauseButton.onClick.AddListener(OnPauseClicked);
         _stopButton.onClick.AddListener(OnStopClicked);
         ResetProgress();
         _slider.value = 0f;
@@ -72,6 +78,23 @@ public class StatusChange : MonoBehaviour
         int duration = Random.Range(_minScanTime, _maxScanTime + 1);
         _sliderCoroutine = StartCoroutine(HandleSlider(duration));
         OnTotalDurationCalculated?.Invoke(duration);
+    }
+
+    private void OnPauseClicked()
+    {
+        switch (_currentStatus)
+        {
+            case RobotStatus.Paused:
+                SetStatus(_preStatus);
+                _testText.text = "Pause";
+                break;
+            default:
+                _preStatus = _currentStatus;
+                SetStatus(RobotStatus.Paused);
+                _testText.text = "Continue";
+                break;
+        }
+        
     }
     
     private void OnStopClicked()

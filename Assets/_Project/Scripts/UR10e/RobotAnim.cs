@@ -21,7 +21,6 @@ public class RobotAnim : MonoBehaviour
     private float _currentZ;
     private bool _isMovingRight;
     private bool _isMovingZ;
-    private bool _isPaused;
     
     
     public delegate void TotalTimeChanged();
@@ -59,7 +58,7 @@ public class RobotAnim : MonoBehaviour
 
     private void Update()
     {
-        if (_rs.CurrentStatus is StatusChange.RobotStatus.Idle or StatusChange.RobotStatus.Paused) return;
+        if (_rs.CurrentStatus is StatusChange.RobotStatus.Idle or StatusChange.RobotStatus.Analysing or StatusChange.RobotStatus.Paused) return;
         if (_rs.CurrentTask is StatusChange.RobotTasks.SurfaceScan or StatusChange.RobotTasks.None)
         {
             transform.position = Vector3.MoveTowards(transform.position, _target, _speed * Time.deltaTime);
@@ -99,20 +98,28 @@ public class RobotAnim : MonoBehaviour
             if (++_counter >= _duration * DURATION_LIMIT_COEFFICIENT) yield break;
         }
     }
-    private System.Collections.IEnumerator PauseMovement(float defectPauseTime, float logPauseTime)
+    private System.Collections.IEnumerator DefectAnalysis(float defectPauseTime, float logPauseTime)
     {
+        yield return CheckIfPaused();
         StatusChange.RobotStatus originalStatus = _rs.CurrentStatus;
         StatusChange.RobotTasks originalTask = _rs.CurrentTask;
-        _rs.SetStatus(StatusChange.RobotStatus.Paused);
+        _rs.SetStatus(StatusChange.RobotStatus.Analysing);
         _rs.SetTask(StatusChange.RobotTasks.DefectAnalysis);
         IncrementTotalDefect();
         yield return new WaitForSeconds(defectPauseTime);
+        yield return CheckIfPaused();
         IncrementCompletedTasks();
         _rs.SetTask(StatusChange.RobotTasks.Logging);
         yield return new WaitForSeconds(logPauseTime);
+        yield return CheckIfPaused();
         IncrementCompletedTasks();
         _rs.SetStatus(originalStatus);
         _rs.SetTask(originalTask);
+    }
+
+    private System.Collections.IEnumerator CheckIfPaused()
+    {
+        while (_rs.CurrentStatus == StatusChange.RobotStatus.Paused) yield return null;
     }
     
     private void HandleTargetReached()
@@ -235,7 +242,7 @@ public class RobotAnim : MonoBehaviour
 
     public void DefectDetected()
     {
-        _pauseCoroutine = StartCoroutine(PauseMovement(_rs.GetDefectPauseTime(), _rs.GetLogPauseTime()));
+        _pauseCoroutine = StartCoroutine(DefectAnalysis(_rs.GetDefectPauseTime(), _rs.GetLogPauseTime()));
     }
     
     public float TotalTime => _totalTime;
