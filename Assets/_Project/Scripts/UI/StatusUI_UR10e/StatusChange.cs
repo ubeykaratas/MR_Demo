@@ -48,11 +48,10 @@ public class StatusChange : MonoBehaviour
     [Header("UI Elements")]
     [SerializeField] private Button _startButton;
     [SerializeField] private Button _pauseButton;
-    [SerializeField] private TextMeshProUGUI _testText;
     [SerializeField] private Button _stopButton;
     [SerializeField] private Slider _slider;
-    [SerializeField] private TMPro.TextMeshProUGUI _statusText;
-    [SerializeField] private TMPro.TextMeshProUGUI _taskText;
+    [SerializeField] private TextMeshProUGUI _statusText;
+    [SerializeField] private TextMeshProUGUI _taskText;
     
     private Coroutine _sliderCoroutine;
     private RobotStatus _preStatus = RobotStatus.Idle;
@@ -86,12 +85,12 @@ public class StatusChange : MonoBehaviour
         {
             case RobotStatus.Paused:
                 SetStatus(_preStatus);
-                _testText.text = "Pause";
+                ChangeToPauseButton(true);
                 break;
             default:
                 _preStatus = _currentStatus;
+                ChangeToPauseButton(false);
                 SetStatus(RobotStatus.Paused);
-                _testText.text = "Continue";
                 break;
         }
         
@@ -102,6 +101,7 @@ public class StatusChange : MonoBehaviour
         if(_currentStatus == RobotStatus.Idle) return;
         StopCoroutine(_sliderCoroutine);
         OnTotalDurationCalculated?.Invoke(-1);
+        ChangeToPauseButton(true);
         ResetProgress();
     }
     #endregion
@@ -145,6 +145,21 @@ public class StatusChange : MonoBehaviour
             elapsed += Time.deltaTime;
             _slider.value = Mathf.Clamp01(elapsed / duration);
             yield return null;
+        }
+    }
+    
+    private void ChangeToPauseButton(bool change)
+    {
+        switch (change)
+        {
+            case true:
+                _pauseButton.GetComponentInChildren<TextMeshProUGUI>().text = "Pause";
+                _pauseButton.GetComponent<Image>().color = new Color(217f/255f, 136f/255f, 38/255f, 1f);
+                break;
+            case false:
+                _pauseButton.GetComponentInChildren<TextMeshProUGUI>().text = "Continue";
+                _pauseButton.GetComponent<Image>().color = new Color(15f/255f, 164f/255f, 56f/255f, 1f);
+                break;
         }
     }
 

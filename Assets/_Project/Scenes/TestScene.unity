@@ -4385,7 +4385,6 @@ MonoBehaviour:
   _logPauseTime: 1
   _startButton: {fileID: 1848801288}
   _pauseButton: {fileID: 582566319}
-  _testText: {fileID: 752099258}
   _stopButton: {fileID: 1421075613}
   _slider: {fileID: 204468333}
   _statusText: {fileID: 1013528201}
@@ -4927,7 +4926,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 2100000, guid: 2c59325cff8447d47899d7e518a87833, type: 2}
-  m_Color: {r: 0.8490566, g: 0.53379315, b: 0.1481844, a: 1}
+  m_Color: {r: 0.8509804, g: 0.53333336, b: 0.14901961, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -6422,6 +6421,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _tooltipText: {fileID: 1161974026}
   _eyeObject: {fileID: 2056941198}
+  _swayAmount: 0.05
+  _frequency: 3
 --- !u!1 &761624483
 GameObject:
   m_ObjectHideFlags: 0
@@ -6590,6 +6591,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 805619923}
   m_CullTransparentMesh: 1
+--- !u!1 &810732087
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 810732089}
+  - component: {fileID: 810732088}
+  m_Layer: 0
+  m_Name: HAND_GESTURE_DETECTION_COMPONENT
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &810732088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810732087}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a807e70f181fd1458abb7e46cd94282, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _pinchTolerance: 0.02
+  _pokeTolerance: 0.03
+  _grabTolerance: 0.04
+--- !u!4 &810732089
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 810732087}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.33660153, y: 0.85874003, z: 2.9391575}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &825732751
 GameObject:
   m_ObjectHideFlags: 0
@@ -12788,7 +12836,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -14605,3 +14653,4 @@ SceneRoots:
   - {fileID: 1874455153}
   - {fileID: 1481134901}
   - {fileID: 1990866238}
+  - {fileID: 810732089}

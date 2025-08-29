@@ -93,6 +93,7 @@ public class RobotAnim : MonoBehaviour
     {
         while (true)
         {
+            yield return CheckIfPaused();
             yield return new WaitForSeconds(1f);
             IncrementTotalTime(1f);
             if (++_counter >= _duration * DURATION_LIMIT_COEFFICIENT) yield break;
