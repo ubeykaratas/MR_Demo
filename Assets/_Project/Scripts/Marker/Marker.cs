@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Marker : MonoBehaviour
@@ -6,12 +7,19 @@ public class Marker : MonoBehaviour
     [SerializeField] private RobotAnim _ra;
     [SerializeField] private HandleDefectUI _defectUI;
     
-    private bool _isReturning;
+    private bool _isRelocating;
+    private bool _canAnalysis;
 
     #region monos
 
+    private void Start()
+    {
+        _canAnalysis = true;
+    }
+
     private void OnEnable()
     {
+        
         StatusChange.OnStatusChanged += StatusHandler;
     }
 
@@ -25,14 +33,33 @@ public class Marker : MonoBehaviour
 
     private void StatusHandler(StatusChange.RobotStatus status)
     {
-        _isReturning = status == StatusChange.RobotStatus.Returning;
+        _isRelocating = status is StatusChange.RobotStatus.Returning or StatusChange.RobotStatus.Navigating;
     }
     
     private void OnTriggerEnter(Collider other)
     {
-        if (!other.gameObject.CompareTag("Marker") || _isReturning) return;
+        if (!other.gameObject.CompareTag("Marker") || !_canAnalysis || _isRelocating) return;
+        _canAnalysis = false;
         Vector3 markerPos = other.transform.position;
         _defectUI.CreateCoordinate(markerPos);
+        _ra.AddCheckPoint();
         _ra.DefectDetected();
     }
+    
+    private void OnTriggerStay(Collider other)
+    {
+        if (!other.gameObject.CompareTag("Marker") || !_canAnalysis || _isRelocating) return;
+        _canAnalysis = false;
+        Vector3 markerPos = other.transform.position;
+        _defectUI.CreateCoordinate(markerPos);
+        _ra.AddCheckPoint();
+        _ra.DefectDetected();
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (!other.gameObject.CompareTag("Marker")) return;
+        _canAnalysis = true;
+    }
+    
 }

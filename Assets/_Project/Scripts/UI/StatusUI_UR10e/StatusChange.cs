@@ -12,6 +12,7 @@ public class StatusChange : MonoBehaviour
         Paused,
         Analysing,
         Returning,
+        Navigating,
         Error,
     }
 
@@ -57,6 +58,7 @@ public class StatusChange : MonoBehaviour
     private RobotStatus _preStatus = RobotStatus.Idle;
 
     #region monos
+    
     private void Start()
     {
         _startButton.onClick.AddListener(OnStartClicked);
@@ -65,8 +67,6 @@ public class StatusChange : MonoBehaviour
         ResetProgress();
         _slider.value = 0f;
     }
-
-    
 
     #endregion
     
@@ -79,7 +79,7 @@ public class StatusChange : MonoBehaviour
         OnTotalDurationCalculated?.Invoke(duration);
     }
 
-    private void OnPauseClicked()
+    public void OnPauseClicked()
     {
         switch (_currentStatus)
         {
@@ -106,7 +106,7 @@ public class StatusChange : MonoBehaviour
     }
     #endregion
 
-    #region StatusHandlers
+    #region StateHandlers
     private void ResetProgress()
     {
         SetTask(RobotTasks.None);

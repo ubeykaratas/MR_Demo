@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class RobotAnim : MonoBehaviour
@@ -14,14 +15,17 @@ public class RobotAnim : MonoBehaviour
     [Header("References")]
     [SerializeField] private StatusChange _rs;
     
+    
     private Vector3 _startPos;
     private Vector3 _target;
+    private List<(Vector3 pos, bool isMovingRight, bool isMovingZ)> _checkPoints;
+    private (Vector3 pos, bool isMovingRight, bool isMovingZ) _prePos;
     private float _speed;
     private float _duration;
     private float _currentZ;
     private bool _isMovingRight;
     private bool _isMovingZ;
-    
+    private bool _isRechecking;
     
     public delegate void TotalTimeChanged();
     public static event TotalTimeChanged OnTotalTimeChanged;
@@ -39,7 +43,6 @@ public class RobotAnim : MonoBehaviour
     private Coroutine _surfaceScanTimeCoroutine;
 
     private int _counter;
-    
 
     #region monos
 
@@ -48,6 +51,7 @@ public class RobotAnim : MonoBehaviour
         transform.position = new Vector3(_minX, transform.position.y, _minZ);
         _startPos = transform.position;
         _currentZ = _minZ;
+        _checkPoints = new List<(Vector3, bool, bool)>();
         StatusChange.OnTotalDurationCalculated += StartWorking;
     }
 
@@ -78,6 +82,7 @@ public class RobotAnim : MonoBehaviour
             SetTarget();
             return;
         }
+        _checkPoints.Clear();
         _duration = time;
         _rs.SetStatus(StatusChange.RobotStatus.Working);
         _rs.SetTask(StatusChange.RobotTasks.SurfaceScan);
@@ -125,7 +130,20 @@ public class RobotAnim : MonoBehaviour
     
     private void HandleTargetReached()
     {
-        if (_rs.CurrentStatus == StatusChange.RobotStatus.Working && !_isMovingZ)
+        if (_rs.CurrentStatus is StatusChange.RobotStatus.Navigating)
+        {
+            if(_checkPoints.Count > 0) _checkPoints.RemoveAt(_checkPoints.Count - 1);
+            _rs.SetStatus(StatusChange.RobotStatus.Working);
+            
+            if (_isMovingZ)
+            {
+                _target = new Vector3(transform.position.x, transform.position.y, _currentZ + _stepZ);
+            }
+            else SetTarget();
+            
+            _rs.OnPauseClicked();
+        }
+        else if (_rs.CurrentStatus == StatusChange.RobotStatus.Working && !_isMovingZ)
         {
             float nextZ = Mathf.Min(_currentZ + _stepZ, _maxZ);
             if (nextZ <= _currentZ + 0.01f)
@@ -175,16 +193,28 @@ public class RobotAnim : MonoBehaviour
     {
         switch (_rs.CurrentStatus)
         {
+            case StatusChange.RobotStatus.Navigating:
+                AssignTarget(_checkPoints[^1].pos, _checkPoints[^1].isMovingRight, _checkPoints[^1].isMovingZ);
+                _rs.SetTask(StatusChange.RobotTasks.SurfaceScan);
+                return;
             case StatusChange.RobotStatus.Returning:
-                _target = _startPos;
                 if (_pauseCoroutine != null) StopCoroutine(_pauseCoroutine);
                 if (_surfaceScanTimeCoroutine != null) StopCoroutine(_surfaceScanTimeCoroutine);
+                _target = _startPos;
                 return;
             case StatusChange.RobotStatus.Working when !_isMovingZ:
                 float targetX = _isMovingRight ? _maxX : _minX;
                 _target = new Vector3(targetX, transform.position.y, _currentZ);
                 return;
         }
+    }
+
+    private void AssignTarget(Vector3 pos, bool isMovingRight, bool isMovingZ)
+    {
+        _currentZ = pos.z;
+        _isMovingRight = isMovingRight;
+        _isMovingZ = isMovingZ;
+        _target = pos;
     }
 
     private void ResetProgress()
@@ -241,6 +271,19 @@ public class RobotAnim : MonoBehaviour
 
     #region API
 
+    public void AddCheckPoint()
+    {
+        Vector3 pos = new Vector3(transform.position.x, transform.position.y, _currentZ);
+        _checkPoints.Add((pos, _isMovingRight, _isMovingZ));
+    }
+
+    public void NavigateToCoordinate()
+    {
+        _rs.SetStatus(StatusChange.RobotStatus.Navigating);
+        SetTarget();
+        
+    }
+    
     public void DefectDetected()
     {
         _pauseCoroutine = StartCoroutine(DefectAnalysis(_rs.GetDefectPauseTime(), _rs.GetLogPauseTime()));
