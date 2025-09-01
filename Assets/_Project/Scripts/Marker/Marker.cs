@@ -36,23 +36,13 @@ public class Marker : MonoBehaviour
         _isRelocating = status is StatusChange.RobotStatus.Returning or StatusChange.RobotStatus.Navigating;
     }
     
-    private void OnTriggerEnter(Collider other)
-    {
-        if (!other.gameObject.CompareTag("Marker") || !_canAnalysis || _isRelocating) return;
-        _canAnalysis = false;
-        Vector3 markerPos = other.transform.position;
-        _defectUI.CreateCoordinate(markerPos);
-        _ra.AddCheckPoint();
-        _ra.DefectDetected();
-    }
-    
     private void OnTriggerStay(Collider other)
     {
         if (!other.gameObject.CompareTag("Marker") || !_canAnalysis || _isRelocating) return;
         _canAnalysis = false;
         Vector3 markerPos = other.transform.position;
         _defectUI.CreateCoordinate(markerPos);
-        _ra.AddCheckPoint();
+        _ra.AddCheckPoint(other.transform.position.x, other.transform.position.z);
         _ra.DefectDetected();
     }
 

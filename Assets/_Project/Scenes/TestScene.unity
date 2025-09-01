@@ -2056,7 +2056,6 @@ MonoBehaviour:
   _maxZ: 3.18
   _stepZ: 0.2
   _rs: {fileID: 552515843}
-  _toleranceX: 0.1
 --- !u!1 &278805352
 GameObject:
   m_ObjectHideFlags: 0

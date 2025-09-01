@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class RobotAnim : MonoBehaviour
@@ -134,14 +135,18 @@ public class RobotAnim : MonoBehaviour
         {
             if(_checkPoints.Count > 0) _checkPoints.RemoveAt(_checkPoints.Count - 1);
             _rs.SetStatus(StatusChange.RobotStatus.Working);
-            
-            if (_isMovingZ)
+            if (!_isRechecking)
             {
-                _target = new Vector3(transform.position.x, transform.position.y, _currentZ + _stepZ);
+                if(_isMovingZ) _target = new Vector3(transform.position.x, transform.position.y, _currentZ + _stepZ);
+                else SetTarget();
             }
-            else SetTarget();
-            
             _rs.OnPauseClicked();
+        }
+        else if (_isRechecking)
+        {
+            _isRechecking = false;
+            _rs.SetStatus(StatusChange.RobotStatus.Navigating);
+            SetTarget();
         }
         else if (_rs.CurrentStatus == StatusChange.RobotStatus.Working && !_isMovingZ)
         {
@@ -194,7 +199,12 @@ public class RobotAnim : MonoBehaviour
         switch (_rs.CurrentStatus)
         {
             case StatusChange.RobotStatus.Navigating:
-                AssignTarget(_checkPoints[^1].pos, _checkPoints[^1].isMovingRight, _checkPoints[^1].isMovingZ);
+                if (_isRechecking) //Get to the recheck position
+                    AssignTarget(_checkPoints[^1].pos, _checkPoints[^1].isMovingRight, _checkPoints[^1].isMovingZ);
+                else //Get back to original position
+                {
+                    AssignTarget(_prePos.pos, _prePos.isMovingRight, _prePos.isMovingZ);
+                } 
                 _rs.SetTask(StatusChange.RobotTasks.SurfaceScan);
                 return;
             case StatusChange.RobotStatus.Returning:
@@ -211,7 +221,6 @@ public class RobotAnim : MonoBehaviour
 
     private void AssignTarget(Vector3 pos, bool isMovingRight, bool isMovingZ)
     {
-        _currentZ = pos.z;
         _isMovingRight = isMovingRight;
         _isMovingZ = isMovingZ;
         _target = pos;
@@ -271,17 +280,26 @@ public class RobotAnim : MonoBehaviour
 
     #region API
 
-    public void AddCheckPoint()
+    public void AddCheckPoint(float x, float z)
     {
-        Vector3 pos = new Vector3(transform.position.x, transform.position.y, _currentZ);
+        if (_checkPoints.Count > 0 &&
+            Mathf.Approximately(_checkPoints[^1].pos.x, x) && 
+            Mathf.Approximately(_checkPoints[^1].pos.z, z))
+        {
+            return;
+        }
+        
+        Vector3 pos = new Vector3(x, transform.position.y, z);
         _checkPoints.Add((pos, _isMovingRight, _isMovingZ));
     }
 
     public void NavigateToCoordinate()
     {
+        if(_rs.CurrentStatus is not (StatusChange.RobotStatus.Paused or StatusChange.RobotStatus.Navigating))
+            _prePos = (transform.position, _isMovingRight, _isMovingZ);
+        _isRechecking = true;
         _rs.SetStatus(StatusChange.RobotStatus.Navigating);
         SetTarget();
-        
     }
     
     public void DefectDetected()
