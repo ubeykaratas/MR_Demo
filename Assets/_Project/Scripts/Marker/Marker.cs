@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class Marker : MonoBehaviour
@@ -33,7 +32,7 @@ public class Marker : MonoBehaviour
 
     private void StatusHandler(StatusChange.RobotStatus status)
     {
-        _isRelocating = status is StatusChange.RobotStatus.Returning or StatusChange.RobotStatus.Navigating;
+        _isRelocating = status is StatusChange.RobotStatus.Returning or StatusChange.RobotStatus.Navigating or StatusChange.RobotStatus.Paused;
     }
     
     private void OnTriggerStay(Collider other)
@@ -42,7 +41,7 @@ public class Marker : MonoBehaviour
         _canAnalysis = false;
         Vector3 markerPos = other.transform.position;
         _defectUI.CreateCoordinate(markerPos);
-        _ra.AddCheckPoint(other.transform.position.x, other.transform.position.z);
+        _ra.AddCheckPoint(markerPos.x, markerPos.z);
         _ra.DefectDetected();
     }
 

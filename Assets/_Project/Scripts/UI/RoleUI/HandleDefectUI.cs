@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 using System.Collections.Generic;
@@ -29,6 +28,12 @@ public class HandleDefectUI : MonoBehaviour
         ChangeUIVisibility(false);
         _originalOutline = _panelOutline.sizeDelta;
         _resetButton.onClick.AddListener(RemoveUI);
+        RobotAnim.OnCompleteRecheck += RemoveDefectUIElement;
+    }
+
+    private void OnDestroy()
+    {
+        RobotAnim.OnCompleteRecheck -= RemoveDefectUIElement;
     }
 
     #endregion
@@ -50,7 +55,16 @@ public class HandleDefectUI : MonoBehaviour
         _defects.Add(newText);
     }
 
-    public void RemoveUI()
+    private void RemoveDefectUIElement(int index)
+    {
+        Destroy(_defects[index]);
+        _defects.RemoveAt(index);
+        Vector2 newOutlineSize = _panelOutline.sizeDelta;
+        newOutlineSize.y -= _outlineCorrector;
+        _panelOutline.sizeDelta = newOutlineSize;
+    }
+
+    private void RemoveUI()
     {
         if(_rs.CurrentStatus != StatusChange.RobotStatus.Idle) return;
         foreach (GameObject defect in _defects)

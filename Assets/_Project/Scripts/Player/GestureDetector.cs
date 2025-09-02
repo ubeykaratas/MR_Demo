@@ -4,6 +4,8 @@ using UnityEngine.XR.Hands;
 public class GestureDetector : MonoBehaviour
 {
     private XRHandSubsystem _handSubsystem;
+    public delegate void GestureChanged(Gesture gesture);
+    public static event GestureChanged OnGestureChanged;
     
     [Header("Tolerances")]
     [SerializeField] private float _defaultTolerance = 0.05f;
@@ -11,7 +13,7 @@ public class GestureDetector : MonoBehaviour
     [SerializeField] private float _pokeTolerance = 0.03f;
     [SerializeField] private float _grabTolerance = 0.04f;
 
-    private enum Gesture
+    public enum Gesture
     {
         None,
         Pinch,
@@ -22,6 +24,8 @@ public class GestureDetector : MonoBehaviour
 
     private Gesture _preLeftGesture;
     private Gesture _preRightGesture;
+    private Gesture _currentLeftGesture;
+    private Gesture _currentRightGesture;
 
     private void Start()
     {
@@ -34,8 +38,21 @@ public class GestureDetector : MonoBehaviour
     {
         if (_handSubsystem is not { running: true }) return;
         
-        HandleLogging(_handSubsystem.leftHand, ref _preLeftGesture, true);
-        HandleLogging(_handSubsystem.rightHand, ref _preRightGesture,false);
+        HandleGestureChange(_handSubsystem.leftHand, ref _preLeftGesture);
+        HandleGestureChange(_handSubsystem.rightHand, ref _preRightGesture);
+        
+        //HandleLogging(_handSubsystem.leftHand, ref _preLeftGesture, true);
+        //HandleLogging(_handSubsystem.rightHand, ref _preRightGesture,false);
+    }
+
+    private void HandleGestureChange(XRHand hand, ref Gesture preGesture)
+    {
+        if (!hand.isTracked) return;
+        
+        Gesture currentGesture = GetCurrentGesture(hand);
+        if(currentGesture == preGesture) return;
+        OnGestureChanged?.Invoke(currentGesture);
+        preGesture = currentGesture;
     }
 
     private void HandleLogging(XRHand hand, ref Gesture preGesture , bool isLeftHand)
@@ -43,8 +60,8 @@ public class GestureDetector : MonoBehaviour
         if(!hand.isTracked) return;
         
         Gesture currentGesture = GetCurrentGesture(hand);
-        if(currentGesture == preGesture) return;
-        Debug.LogWarning($"Current {(isLeftHand ? "Left" : "Right")} Hand: {currentGesture}");
+        //if(currentGesture == preGesture) return;
+        //Debug.LogWarning($"Current {(isLeftHand ? "Left" : "Right")} Hand: {currentGesture}");
         preGesture = currentGesture;
     }
 
@@ -104,5 +121,4 @@ public class GestureDetector : MonoBehaviour
         
         return false;
     }
-    
 }

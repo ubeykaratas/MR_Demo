@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class HandleConf : MonoBehaviour
@@ -16,7 +15,7 @@ public class HandleConf : MonoBehaviour
 
     private void OnConfirmClicked()
     {
-        //Confirm
+        _ra.Confirm();
     }
 
     private void OnRecheckClicked()

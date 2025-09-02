@@ -13,6 +13,8 @@ public class StatusChange : MonoBehaviour
         Analysing,
         Returning,
         Navigating,
+        Relocating,
+        PendingApproval,
         Error,
     }
 
@@ -79,7 +81,7 @@ public class StatusChange : MonoBehaviour
         OnTotalDurationCalculated?.Invoke(duration);
     }
 
-    public void OnPauseClicked()
+    private void OnPauseClicked()
     {
         switch (_currentStatus)
         {
@@ -87,6 +89,8 @@ public class StatusChange : MonoBehaviour
                 SetStatus(_preStatus);
                 ChangeToPauseButton(true);
                 break;
+            case RobotStatus.Idle:
+                return;
             default:
                 _preStatus = _currentStatus;
                 ChangeToPauseButton(false);
@@ -131,7 +135,7 @@ public class StatusChange : MonoBehaviour
     #endregion
     private System.Collections.IEnumerator HandleSlider(int duration)
     {
-         float elapsed = 0f;
+        float elapsed = 0f;
         _slider.value = 0f;
 
         while (elapsed < duration)
@@ -142,13 +146,13 @@ public class StatusChange : MonoBehaviour
                 continue;
             }
             
-            elapsed += Time.deltaTime;
+            elapsed += Time.deltaTime + .0003f;
             _slider.value = Mathf.Clamp01(elapsed / duration);
             yield return null;
         }
     }
     
-    private void ChangeToPauseButton(bool change)
+    public void ChangeToPauseButton(bool change)
     {
         switch (change)
         {
@@ -164,6 +168,12 @@ public class StatusChange : MonoBehaviour
     }
 
     #region Getter-Setter
+
+    public RobotStatus PreStatus
+    {
+        get => _preStatus;
+        set => _preStatus = value;
+    }
     public RobotStatus CurrentStatus => _currentStatus;
     public RobotTasks CurrentTask => _currentTask;
 
