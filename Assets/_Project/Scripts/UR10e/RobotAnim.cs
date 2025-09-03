@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class RobotAnim : MonoBehaviour
@@ -28,6 +27,7 @@ public class RobotAnim : MonoBehaviour
     private bool _isMovingZ;
     private bool _isRechecking;
     private int _flagIndex;
+    private bool _logCorrection;
     
     public delegate void TotalTimeChanged();
     public static event TotalTimeChanged OnTotalTimeChanged;
@@ -54,6 +54,7 @@ public class RobotAnim : MonoBehaviour
     private void Start()
     {
         transform.position = new Vector3(_minX, transform.position.y, _minZ);
+        _logCorrection = false;
         _startPos = transform.position;
         _currentZ = _minZ;
         _flagIndex = 1;
@@ -97,6 +98,7 @@ public class RobotAnim : MonoBehaviour
         CalculateSpeed();
         SetTarget();
         _surfaceScanTimeCoroutine = StartCoroutine(CountUp());
+        LogManager.Log(LogSource.System, LogEvent.TaskStatus, "Yüzey taraması başlatıldı");
     }
 
     #endregion
@@ -119,16 +121,22 @@ public class RobotAnim : MonoBehaviour
         
         _rs.SetStatus(StatusChange.RobotStatus.Analysing);
         _rs.SetTask(StatusChange.RobotTasks.DefectAnalysis);
+        LogManager.Log(LogSource.System, LogEvent.TaskStatus, "Kusur analizi başlatıldı");
         IncrementTotalDefect();
         yield return new WaitForSeconds(defectPauseTime);
         yield return CheckIfPaused();
         IncrementCompletedTasks();
+        LogManager.Log(LogSource.System, LogEvent.TaskStatus, "Kusur analizi tamamlandı");
         _rs.SetTask(StatusChange.RobotTasks.Logging);
         yield return new WaitForSeconds(logPauseTime);
         yield return CheckIfPaused();
         IncrementCompletedTasks();
         _rs.SetStatus(originalStatus);
         _rs.SetTask(originalTask);
+        
+        if(_logCorrection) 
+            LogManager.Log(LogSource.System, LogEvent.RobotStatus, "Yüzey taramasının kesildiği noktaya doğru hareket başlatıldı");
+        _logCorrection = false;
     }
 
     private System.Collections.IEnumerator CheckIfPaused()
@@ -144,6 +152,7 @@ public class RobotAnim : MonoBehaviour
             _rs.PreStatus = StatusChange.RobotStatus.Working;
             _rs.ChangeToPauseButton(false);
             _rs.SetStatus(StatusChange.RobotStatus.Paused);
+            LogManager.Log(LogSource.System, LogEvent.RobotStatus, "Son kusur noktasında operatör işlemi bekleniyor");
         }
         else if (_isRechecking)
         {
@@ -163,6 +172,7 @@ public class RobotAnim : MonoBehaviour
             _rs.PreStatus = StatusChange.RobotStatus.Working;
             _rs.ChangeToPauseButton(false);
             _rs.SetStatus(StatusChange.RobotStatus.Paused);
+            LogManager.Log(LogSource.System, LogEvent.RobotStatus, "Yüzey taramasının kesildiği noktada operatör işlemi bekleniyor");
         }
         else if (_rs.CurrentStatus == StatusChange.RobotStatus.Working && !_isMovingZ)
         {
@@ -170,6 +180,7 @@ public class RobotAnim : MonoBehaviour
             if (nextZ <= _currentZ + 0.01f)
             {
                 _rs.SetStatus(StatusChange.RobotStatus.PendingApproval);
+                LogManager.Log(LogSource.System, LogEvent.RobotStatus, "Görev onayı bekleniyor");
             }
             else
             {
@@ -215,11 +226,13 @@ public class RobotAnim : MonoBehaviour
             case StatusChange.RobotStatus.Navigating or StatusChange.RobotStatus.Relocating:
                 if (_isRechecking) //Get to the recheck position
                 {
+                    LogManager.Log(LogSource.System, LogEvent.RobotStatus, "Bulunan son kusura doğru hareket başlatıldı");
                     int size = _checkPoints.Count;
                     AssignTarget(_checkPoints[size - _flagIndex].pos, _checkPoints[size - _flagIndex].isMovingRight, _checkPoints[size - _flagIndex].isMovingZ);
                 }
                 else //Get back to original position
                 {
+                    _logCorrection = true;
                     AssignTarget(_prePos.pos, _prePos.isMovingRight, _prePos.isMovingZ);
                 } 
                 _rs.SetTask(StatusChange.RobotTasks.SurfaceScan);
@@ -252,6 +265,7 @@ public class RobotAnim : MonoBehaviour
         _currentZ = _minZ;
         _isMovingRight = true;
         _isMovingZ = false;
+        _logCorrection = false;
         transform.position = _startPos;
     }
 
@@ -324,6 +338,7 @@ public class RobotAnim : MonoBehaviour
             _rs.CurrentStatus is StatusChange.RobotStatus.Returning) return;
         if(_rs.CurrentStatus is not (StatusChange.RobotStatus.Paused or StatusChange.RobotStatus.Navigating))
             _prePos = (transform.position, _isMovingRight, _isMovingZ);
+        LogManager.Log(LogSource.User, LogEvent.ButtonInteraction, "Tekrar kontrol et butonuna basıldı");
         if(_pauseCoroutine != null) StopCoroutine(_pauseCoroutine);
         _isRechecking = true;
         _rs.SetStatus(StatusChange.RobotStatus.Navigating);

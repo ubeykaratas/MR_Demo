@@ -43,6 +43,7 @@ public class Marker : MonoBehaviour
         _defectUI.CreateCoordinate(markerPos);
         _ra.AddCheckPoint(markerPos.x, markerPos.z);
         _ra.DefectDetected();
+        LogManager.Log(LogSource.System, LogEvent.DefectDetected, $"Koordinat: {markerPos.x:F2}, {markerPos.y:F2}, {markerPos.z:F2}");
     }
 
     private void OnTriggerExit(Collider other)

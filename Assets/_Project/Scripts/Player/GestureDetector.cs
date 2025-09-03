@@ -24,8 +24,6 @@ public class GestureDetector : MonoBehaviour
 
     private Gesture _preLeftGesture;
     private Gesture _preRightGesture;
-    private Gesture _currentLeftGesture;
-    private Gesture _currentRightGesture;
 
     private void Start()
     {
@@ -120,5 +118,11 @@ public class GestureDetector : MonoBehaviour
         }
         
         return false;
+    }
+
+    public Gesture GetCurrentGesture()
+    {
+        HandleGestureChange(_handSubsystem.leftHand, ref _preLeftGesture);
+        return _preLeftGesture;
     }
 }

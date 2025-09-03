@@ -76,6 +76,7 @@ public class StatusChange : MonoBehaviour
     private void OnStartClicked()
     {
         if (_currentStatus != RobotStatus.Idle) return;
+        LogManager.Log(LogSource.User, LogEvent.ButtonInteraction, "Başlat butonuna basıldı");
         int duration = Random.Range(_minScanTime, _maxScanTime + 1);
         _sliderCoroutine = StartCoroutine(HandleSlider(duration));
         OnTotalDurationCalculated?.Invoke(duration);
@@ -86,12 +87,14 @@ public class StatusChange : MonoBehaviour
         switch (_currentStatus)
         {
             case RobotStatus.Paused:
+                LogManager.Log(LogSource.User, LogEvent.ButtonInteraction, "Devam et butonuna basıldı");
                 SetStatus(_preStatus);
                 ChangeToPauseButton(true);
                 break;
             case RobotStatus.Idle:
                 return;
             default:
+                LogManager.Log(LogSource.User, LogEvent.ButtonInteraction, "Beklet butonuna basıldı");
                 _preStatus = _currentStatus;
                 ChangeToPauseButton(false);
                 SetStatus(RobotStatus.Paused);
@@ -103,6 +106,7 @@ public class StatusChange : MonoBehaviour
     private void OnStopClicked()
     {
         if(_currentStatus == RobotStatus.Idle) return;
+        LogManager.Log(LogSource.User, LogEvent.ButtonInteraction, "Durdur Butonuna Basıldı");
         StopCoroutine(_sliderCoroutine);
         OnTotalDurationCalculated?.Invoke(-1);
         ChangeToPauseButton(true);
