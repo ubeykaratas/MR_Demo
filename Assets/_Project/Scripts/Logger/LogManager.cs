@@ -5,18 +5,20 @@ using UnityEngine;
 
 public static class LogManager
 {
-    private static string logFilePath;
+    private static readonly string LOGFilePath;
+    public delegate void LogCreated(string timestamp, string source, string eventName, string detail);
+    public static event LogCreated OnLogCreated;
 
     static LogManager()
     {
         string folderPath = Path.Combine(Application.persistentDataPath, "Logs");
         Directory.CreateDirectory(folderPath);
 
-        logFilePath = Path.Combine(folderPath, $"MRLog_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv");
+        LOGFilePath = Path.Combine(folderPath, $"MRLog_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv");
 
-        if (!File.Exists(logFilePath))
+        if (!File.Exists(LOGFilePath))
         {
-            File.AppendAllText(logFilePath, "Timestamp, Kaynak, Olay, Detay\n");
+            File.AppendAllText(LOGFilePath, "Timestamp, Kaynak, Olay, Detay\n");
         }
     }
 
@@ -27,7 +29,8 @@ public static class LogManager
         
         string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
         string logEntry = $"{timestamp},{sourceText},{eventText},{detail}\n";
-        File.AppendAllText(logFilePath, logEntry);
+        File.AppendAllText(LOGFilePath, logEntry);
+        OnLogCreated?.Invoke(timestamp, sourceText, eventText, detail);
     }
 
     private static readonly Dictionary<LogSource, string> LogSourceMap = new()
