@@ -51,7 +51,6 @@ public class HandleLogUI : MonoBehaviour
         newOutlineSize.y += _outlineCorrector;
         if(newOutlineSize.y >= _maxOutlineHeight) newOutlineSize.y = _maxOutlineHeight; 
         _panelOutline.sizeDelta = newOutlineSize;
-        Debug.LogError($"O: {_panelOutline.sizeDelta}");
     }
 
     private void ChangeUIVisibility(bool visibility)

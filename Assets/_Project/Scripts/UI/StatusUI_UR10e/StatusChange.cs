@@ -29,9 +29,6 @@ public class StatusChange : MonoBehaviour
     public delegate void StatusChangedEvent(RobotStatus status);
     public static event StatusChangedEvent OnStatusChanged;
     
-    public delegate void TaskChangedEvent(RobotTasks task);
-    public static event TaskChangedEvent OnTaskChanged;
-    
     public delegate void TotalDurationEvent(int totalDuration);
     public static event TotalDurationEvent OnTotalDurationCalculated;
     
@@ -134,7 +131,6 @@ public class StatusChange : MonoBehaviour
     {
         _currentTask = task;
         _taskText.text = $"<b>Task: <smallcaps>{_currentTask.ToString()}</smallcaps></b>";
-        OnTaskChanged?.Invoke(task);
     }
     #endregion
     private System.Collections.IEnumerator HandleSlider(int duration)
