@@ -67,7 +67,7 @@ public class RobotAnim : MonoBehaviour
         StatusChange.OnTotalDurationCalculated -= StartWorking;
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (_rs.CurrentStatus is StatusChange.RobotStatus.Idle or StatusChange.RobotStatus.Analysing
             or StatusChange.RobotStatus.Paused or StatusChange.RobotStatus.PendingApproval) {}
@@ -298,6 +298,8 @@ public class RobotAnim : MonoBehaviour
     
     private void OnDrawGizmos()
     {
+        if (!Application.isEditor) return;
+        
         Gizmos.color = Color.cyan;
         Vector3 bottomLeft = new Vector3(_minX, transform.position.y, _minZ);
         Vector3 bottomRight = new Vector3(_maxX, transform.position.y, _minZ);
