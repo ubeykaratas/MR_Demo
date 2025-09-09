@@ -46,12 +46,12 @@ public class StatusChange : MonoBehaviour
     [SerializeField] private int _logPauseTime = 1;
     
     [Header("UI Elements")]
-    [SerializeField] private Button _startButton;
-    [SerializeField] private Button _pauseButton;
-    [SerializeField] private Button _stopButton;
-    [SerializeField] private Slider _slider;
-    [SerializeField] private TextMeshProUGUI _statusText;
-    [SerializeField] private TextMeshProUGUI _taskText;
+    public Button _startButton;
+    public Button _pauseButton;
+    public Button _stopButton;
+    public Slider _slider;
+    public TextMeshProUGUI _statusText;
+    public TextMeshProUGUI _taskText;
     
     private Coroutine _sliderCoroutine;
     private RobotStatus _preStatus = RobotStatus.Idle;
@@ -104,7 +104,7 @@ public class StatusChange : MonoBehaviour
     {
         if(_currentStatus == RobotStatus.Idle) return;
         LogManager.Log(LogSource.User, LogEvent.ButtonInteraction, "Durdur Butonuna Basıldı");
-        StopCoroutine(_sliderCoroutine);
+        if(_sliderCoroutine != null) StopCoroutine(_sliderCoroutine);
         OnTotalDurationCalculated?.Invoke(-1);
         ChangeToPauseButton(true);
         ResetProgress();
@@ -168,7 +168,20 @@ public class StatusChange : MonoBehaviour
     }
 
     #region Getter-Setter
-
+    public void SetScanTimes(int minScanTime, int maxScanTime)
+    {
+        if(maxScanTime < minScanTime || minScanTime <= 0 || maxScanTime <= 0) return;
+        _minScanTime = minScanTime;
+        _maxScanTime = maxScanTime;
+    }
+    
+    public void SetPauseTimes(int defectPauseTime, int logPauseTime)
+    {
+        if(defectPauseTime < 0 || logPauseTime < 0) return;
+        _defectPauseTime = defectPauseTime;
+        _logPauseTime = logPauseTime;
+    }
+    
     public RobotStatus PreStatus
     {
         get => _preStatus;

@@ -13,7 +13,7 @@ public class RobotAnim : MonoBehaviour
     [SerializeField] private float _stepZ;
     
     [Header("References")]
-    [SerializeField] private StatusChange _rs;
+    public StatusChange _rs;
     
     
     private Vector3 _startPos;
@@ -95,7 +95,7 @@ public class RobotAnim : MonoBehaviour
         _rs.SetStatus(StatusChange.RobotStatus.Working);
         _rs.SetTask(StatusChange.RobotTasks.SurfaceScan);
         ResetProgress();
-        CalculateSpeed();
+        _speed = CalculateSpeed(time);
         SetTarget();
         _surfaceScanTimeCoroutine = StartCoroutine(CountUp());
         LogManager.Log(LogSource.System, LogEvent.TaskStatus, "Yüzey taraması başlatıldı");
@@ -202,13 +202,13 @@ public class RobotAnim : MonoBehaviour
         }
     }
     
-    private void CalculateSpeed()
+    public float CalculateSpeed(int time)
     {
-        if (_duration <= 0) return;
+        if (time <= 0) return -1;
 
         float width = _maxX - _minX;
         float height = _maxZ - _minZ;
-        if (width <= 0 || height < 0 || _stepZ <= 0) return;
+        if (width < 0 || height < 0 || _stepZ <= 0) return - 1;
         
         float numZStepsF = height / _stepZ;
         int numZSteps = Mathf.CeilToInt(numZStepsF);
@@ -216,7 +216,7 @@ public class RobotAnim : MonoBehaviour
         float totalXDistance = numRows * width;
         float totalZDistance = height;
         float totalDistance = totalXDistance + totalZDistance;
-        _speed = totalDistance / _duration;
+        return totalDistance / time;
     }
 
     private void SetTarget()
@@ -292,8 +292,6 @@ public class RobotAnim : MonoBehaviour
 
     #endregion
     
-    
-    
     #region Gizmos
     
     private void OnDrawGizmos()
@@ -315,6 +313,20 @@ public class RobotAnim : MonoBehaviour
     #endregion
 
     #region API
+
+    public void SetMovementArea(float minX, float minZ, float maxX, float maxZ)
+    {
+        if (maxX < minX || maxX - minX < 0 || maxZ < minZ || maxZ - minZ < 0) return;
+        _minX = minX;
+        _minZ = minZ;
+        _maxX = maxX;
+        _maxZ = maxZ;
+    }
+
+    public void SetStep(float step)
+    {
+        _stepZ = step;
+    }
 
     public void Confirm()
     {
