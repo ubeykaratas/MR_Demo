@@ -82,7 +82,7 @@ public class RobotAnim : MonoBehaviour
 
     #region EventHandler
     
-    private void StartWorking(int time)
+    public void StartWorking(int time)
     {
         if (time == -1)
         {
@@ -208,7 +208,7 @@ public class RobotAnim : MonoBehaviour
 
         float width = _maxX - _minX;
         float height = _maxZ - _minZ;
-        if (width < 0 || height < 0 || _stepZ <= 0) return - 1;
+        if ((width <= 0 && height <= 0) || _stepZ <= 0) return -1;
         
         float numZStepsF = height / _stepZ;
         int numZSteps = Mathf.CeilToInt(numZStepsF);

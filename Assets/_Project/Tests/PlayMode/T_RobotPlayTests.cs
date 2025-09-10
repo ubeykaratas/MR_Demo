@@ -4,8 +4,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.UI;
+using Unity.PerformanceTesting;
 
-public class T_StatusChangeTests
+public class T_RobotPlayTests
 {
     private RobotAnim ra;
     private StatusChange rs;
@@ -70,4 +71,27 @@ public class T_StatusChangeTests
         pauseChild.AddComponent<TextMeshProUGUI>();
         pauseChild.transform.SetParent(gameObject.transform);
     }
+    
+    [UnityTest, Performance]
+    public IEnumerator Robot_Working_Performance()
+    {
+        ra.StartWorking(5);
+        
+        yield return Measure.Frames()
+            .WarmupCount(5)
+            .MeasurementCount(30)
+            .Run();
+    }
+    
+    [UnityTest, Performance]
+    public IEnumerator DefectDetected_Performance()
+    {
+        ra.DefectDetected();
+        
+        yield return Measure.Frames()
+            .WarmupCount(5)
+            .MeasurementCount(30)
+            .Run();
+    }
+    
 }

@@ -1,7 +1,8 @@
 using NUnit.Framework;
 using UnityEngine;
+using Unity.PerformanceTesting;
 
-public class T_CalculateSpeedTests
+public class T_RobotEditorTests
 {
     private RobotAnim ra;
     private float delta = 0.01f;
@@ -77,6 +78,18 @@ public class T_CalculateSpeedTests
         float expectedSpeed = (maxX - minX) / duration;
         Assert.AreEqual(expectedSpeed, speed, delta);
     }
-
+    
+    [Test, Performance]
+    public void CalculateSpeed_Performance()
+    {
+        Measure.Method(() =>
+            {
+                ra.CalculateSpeed(10);
+            })
+            .WarmupCount(5)
+            .MeasurementCount(50)
+            .IterationsPerMeasurement(1000)
+            .Run();
+    }
     
 }
