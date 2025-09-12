@@ -1,6 +1,6 @@
 # Mixed Reality Robot Simulation
 
-This project is a **Mixed Reality (MR) robot simulation and defect detection system** developed with **Unity 6000.0.50f1 LTS** for the **Meta Quest 3** headset. It includes simulation of a UR10e robotic arm, user interface design, defect detection algorithms, gesture-based interactions, and automated testing.
+This project is a **Mixed Reality (MR) robot simulation and defect detection system** developed with **Unity 6000.0.50f1 LTS** for the **Meta Quest 3** headset. It includes simulation of a UR10e robotic arm, user interface design, defect detection, gesture-based interactions, and automated testing.
 
 ## Target Platform
 - **Meta Quest 3**
