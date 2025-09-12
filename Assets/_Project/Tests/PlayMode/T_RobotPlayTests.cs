@@ -93,5 +93,4 @@ public class T_RobotPlayTests
             .MeasurementCount(30)
             .Run();
     }
-    
 }
